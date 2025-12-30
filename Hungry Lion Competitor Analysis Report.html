@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hungry Lion: Social Intelligence Deep Dive</title>
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Monochromatic Red Scale */
+            --red-dark: #2a0000;
+            --red-base: #c8102e;
+            --red-light: #f5b5c3;
+            --red-pale: #fde8ec;
+
+            /* Neutrals */
+            --black: #1a1a1a;
+            --gray-dark: #4a4a4a;
+            --gray: #8a8a8a;
+            --gray-light: #e0e0e0;
+            --bg: #ffffff;
+
+            /* Typography */
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--black);
+            line-height: 1.7;
+            background: var(--bg);
+            overflow-x: hidden;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .nav-sidebar {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            display: none;
+        }
+
+        @media (min-width: 1200px) {
+            .nav-sidebar {
+                display: block;
+            }
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gray-light);
+            margin: 24px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: var(--red-base);
+            transform: scale(1.5);
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 40px;
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .brand {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--red-base);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+        }
+
+        .brand-sub {
+            font-size: 9px;
+            color: var(--gray);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 140px 60px 100px;
+        }
+
+        .section-inner {
+            max-width: 820px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .section:nth-child(even) {
+            background: #fafafa;
+        }
+
+        /* ===== HERO WITH VIDEO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: var(--red-dark);
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.65;
+            filter: brightness(0.8) contrast(1.2);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg,
+                    rgba(42, 0, 0, 0.60) 0%,
+                    rgba(200, 16, 46, 0.50) 100%);
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            padding: 0 40px;
+        }
+
+        .hero-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 40px;
+            opacity: 0.85;
+            font-weight: 600;
+        }
+
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(42px, 7vw, 82px);
+            line-height: 1.1;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(16px, 2.5vw, 20px);
+            line-height: 1.6;
+            opacity: 0.9;
+            font-weight: 400;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            opacity: 0.6;
+            animation: bounce 2s infinite;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(10px);
+            }
+        }
+
+        /* ===== TYPOGRAPHY ===== */
+        .section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--red-base);
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: clamp(32px, 5vw, 52px);
+            line-height: 1.25;
+            color: var(--black);
+            margin-bottom: 50px;
+            font-weight: 700;
+            max-width: 720px;
+        }
+
+        .section-text {
+            font-size: 17px;
+            line-height: 1.9;
+            color: var(--gray-dark);
+            margin-bottom: 35px;
+            max-width: 680px;
+        }
+
+        .section-text strong {
+            color: var(--black);
+            font-weight: 600;
+        }
+
+        /* ===== STATS (MINIMAL) ===== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1px;
+            margin: 80px 0;
+            background: var(--gray-light);
+            border: 1px solid var(--gray-light);
+        }
+
+        .stat-box {
+            background: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gray);
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-family: var(--font-serif);
+            font-size: 68px;
+            line-height: 1;
+            color: var(--red-base);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .stat-description {
+            font-size: 13px;
+            color: var(--gray-dark);
+            line-height: 1.6;
+        }
+
+        /* ===== CALLOUT ===== */
+        .callout {
+            background: var(--red-pale);
+            padding: 50px 60px;
+            margin: 70px 0;
+            border-left: 3px solid var(--red-base);
+        }
+
+        .callout-title {
+            font-size: 16px;
+            color: var(--red-base);
+            margin-bottom: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .callout-text {
+            font-size: 16px;
+            line-height: 1.85;
+            color: var(--gray-dark);
+        }
+
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 70px 0;
+            font-size: 15px;
+        }
+
+        .comparison-table th {
+            background: var(--red-base);
+            color: white;
+            padding: 22px 24px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .comparison-table td {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .comparison-table tr:hover {
+            background: #fafafa;
+        }
+
+        .winner {
+            color: var(--red-base);
+            font-weight: 700;
+        }
+
+        /* ===== HORIZONTAL BAR CHARTS (WORKING) ===== */
+        .chart-container {
+            background: white;
+            border: 1px solid var(--gray-light);
+            padding: 60px 55px;
+            margin: 70px 0;
+        }
+
+        .chart-title {
+            font-size: 24px;
+            color: var(--black);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .chart-subtitle {
+            font-size: 10px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 50px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .bar-label {
+            min-width: 150px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 48px;
+            background: #f5f5f5;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--red-base);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 24px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            width: 0;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-fill.animate {
+            width: var(--target-width);
+        }
+
+        .bar-fill.secondary {
+            background: var(--gray);
+        }
+
+        /* ===== INSIGHT CARDS (NO ICONS) ===== */
+        .insight-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1px;
+            margin: 70px 0;
+            background: var(--gray-light);
+            border: 1px solid var(--gray-light);
+        }
+
+        .insight-card {
+            background: white;
+            padding: 50px 40px;
+        }
+
+        .insight-number {
+            font-size: 9px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .insight-title {
+            font-size: 19px;
+            color: var(--black);
+            margin-bottom: 20px;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .insight-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--gray-dark);
+        }
+
+        /* ===== TIMELINE ===== */
+        .timeline {
+            position: relative;
+            padding-left: 70px;
+            margin: 70px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-light);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 80px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -54px;
+            top: 8px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--red-base);
+            border: 4px solid white;
+            box-shadow: 0 0 0 2px var(--gray-light);
+        }
+
+        .timeline-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--red-base);
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .timeline-title {
+            font-size: 26px;
+            color: var(--black);
+            margin-bottom: 28px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .timeline-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--gray-dark);
+            margin-bottom: 20px;
+        }
+
+        .timeline-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 28px;
+        }
+
+        .timeline-list li {
+            padding-left: 24px;
+            margin-bottom: 12px;
+            position: relative;
+            font-size: 14px;
+            color: var(--gray-dark);
+            line-height: 1.7;
+        }
+
+        .timeline-list li::before {
+            content: '—';
+            position: absolute;
+            left: 0;
+            color: var(--red-base);
+            font-weight: 700;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: var(--red-dark);
+            color: white;
+            padding: 80px 40px 40px;
+            text-align: center;
+        }
+
+        .footer-title {
+            font-family: var(--font-serif);
+            font-size: 42px;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+
+        .footer-text {
+            font-size: 17px;
+            line-height: 1.7;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: var(--red-dark);
+            padding: 18px 50px;
+            border-radius: 0;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            border: 2px solid white;
+        }
+
+        .cta-button:hover {
+            background: transparent;
+            color: white;
+        }
+
+        .footer-meta {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 11px;
+            opacity: 0.6;
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 24px;
+            }
+
+            .section {
+                padding: 100px 24px 60px;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .stat-grid,
+            .insight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                padding: 30px 24px;
+            }
+
+            .bar-label {
+                min-width: 100px;
+                font-size: 12px;
+            }
+
+            .timeline {
+                padding-left: 40px;
+            }
+        }
+    </style>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav-sidebar" id="navSidebar">
+        <div class="nav-dot active" data-section="0"></div>
+        <div class="nav-dot" data-section="1"></div>
+        <div class="nav-dot" data-section="2"></div>
+        <div class="nav-dot" data-section="3"></div>
+        <div class="nav-dot" data-section="4"></div>
+        <div class="nav-dot" data-section="5"></div>
+        <div class="nav-dot" data-section="6"></div>
+    </nav>
+
+    <!-- Header -->
+    <header class="header">
+        <div>
+            <div class="brand">DIG Social Intelligence</div>
+            <div class="brand-sub">For Hungry Lion Management</div>
+        </div>
+    </header>
+
+    <!-- HERO WITH VIDEO -->
+    <section class="section hero" data-section-id="0">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="Dramatic Ink Diffusion Visual - Competitor Analysis.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-label">A Deep Dive Into</div>
+            <h1 class="hero-title">The Real Story Behind Hungry Lion's Brand</h1>
+            <p class="hero-subtitle">Analyzing 200 social posts, 101 million views, and the path to market leadership
+            </p>
+        </div>
+        <div class="scroll-indicator">Scroll ↓</div>
+    </section>
+
+    <!-- SECTION 1: SETTING THE SCENE -->
+    <section class="section" data-section-id="1">
+        <div class="section-inner">
+            <div class="section-label">Section 00 · Setting the Scene</div>
+            <h2 class="section-title">Social media isn't just noise—it's unfiltered truth about your brand.</h2>
+
+            <p class="section-text">
+                Traditional market research asks customers what they think. Social intelligence shows you what they
+                <strong>actually say</strong> when no one's asking. Over 6 months, we analyzed every mention, every
+                reaction, every authentic moment where South Africans talked about Hungry Lion.
+            </p>
+
+            <p class="section-text">
+                What we found: You're winning in volume but losing in perception. You create 2x more conversation than
+                competitors, yet trail in sentiment. You have signature products customers love, yet inconsistent
+                experiences that cost you trust.
+            </p>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Total Analyzed</div>
+                    <div class="stat-value">200</div>
+                    <div class="stat-description">TikTok posts across 3 brands</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Total Views</div>
+                    <div class="stat-value">101M</div>
+                    <div class="stat-description">Impressions analyzed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Your Share</div>
+                    <div class="stat-value">100</div>
+                    <div class="stat-description">Posts mentioning Hungry Lion</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: YOUR POSITION -->
+    <section class="section" data-section-id="1">
+        <div class="section-inner">
+            <div class="section-label">Section 01 · Your Competitive Position</div>
+            <h2 class="section-title">You dominate volume but trail in quality perception.</h2>
+
+            <p class="section-text">
+                Here's the reality: You generate <strong>twice as much social conversation</strong> as Chicken Licken
+                and KFC combined. Your 500th store opening hit 5.57 million views. You have the engagement numbers. But
+                Chicken Licken has the sentiment advantage—and that's costing you customers.
+            </p>
+
+            <div class="chart-container">
+                <div class="chart-title">Brand Performance Snapshot</div>
+                <div class="chart-subtitle">6-Month Social Media Analysis</div>
+
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <div class="bar-label">Post Volume</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="100">100 posts</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">Total Views</div>
+                        <div class="bar-track">
+                            <div class="bar-fill secondary" data-width="90">42.2M</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">Avg Views/Post</div>
+                        <div class="bar-track">
+                            <div class="bar-fill secondary" data-width="45">422K</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">Total Engagement</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="100">878K</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">Positive Sentiment</div>
+                        <div class="bar-track">
+                            <div class="bar-fill secondary" data-width="83">65%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <div class="callout-title">The Opportunity</div>
+                <div class="callout-text">
+                    Close the 13-point sentiment gap with Chicken Licken while maintaining your volume leadership, and
+                    you dominate the market. Every percentage point of sentiment equals thousands of customers choosing
+                    you over competitors.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: COMPETITIVE COMPARISON -->
+    <section class="section" data-section-id="2">
+        <div class="section-inner">
+            <div class="section-label">Section 02 · Competitive Intelligence</div>
+            <h2 class="section-title">Here's exactly how you stack up against Chicken Licken and KFC.</h2>
+
+            <p class="section-text">
+                No guesswork. No assumptions. Just data showing where you win, where you lose, and why it matters.
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Hungry Lion</th>
+                        <th>Chicken Licken</th>
+                        <th>KFC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Post Volume</strong></td>
+                        <td class="winner">100</td>
+                        <td>50</td>
+                        <td>50</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Views</strong></td>
+                        <td>42.2M</td>
+                        <td>46.8M</td>
+                        <td>12.0M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Avg Views/Post</strong></td>
+                        <td>422K</td>
+                        <td>937K</td>
+                        <td>241K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Engagement</strong></td>
+                        <td class="winner">878K</td>
+                        <td>312K</td>
+                        <td>442K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Positive Sentiment</strong></td>
+                        <td>65%</td>
+                        <td>78%</td>
+                        <td>56%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- SECTION 4: YOUR STRENGTHS -->
+    <section class="section" data-section-id="3">
+        <div class="section-inner">
+            <div class="section-label">Section 03 · Your Competitive Strengths</div>
+            <h2 class="section-title">You have five powerful advantages. Protect and amplify them.</h2>
+
+            <div class="insight-grid">
+                <div class="insight-card">
+                    <div class="insight-number">01</div>
+                    <div class="insight-title">Volume Leadership</div>
+                    <div class="insight-text">
+                        100 posts equal 50% of all market conversation. You're the most talked-about brand. This is
+                        invaluable—brands pay millions for the organic content you're getting naturally.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">02</div>
+                    <div class="insight-title">Signature Products</div>
+                    <div class="insight-text">
+                        Triple Big Boss (89% positive) and Sticky Wings (87% positive) genuinely excite customers.
+                        Products so good people become brand advocates.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">03</div>
+                    <div class="insight-title">Value Positioning</div>
+                    <div class="insight-text">
+                        77% positive sentiment on pricing. In a price-sensitive market, you've nailed the "more for
+                        less" equation. This is a powerful competitive moat.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">04</div>
+                    <div class="insight-title">Engagement Quality</div>
+                    <div class="insight-text">
+                        2.08% engagement rate versus Chicken Licken's 0.67%. 49,661 shares—highest in market. People
+                        don't just watch, they interact and amplify.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">05</div>
+                    <div class="insight-title">Milestone Magic</div>
+                    <div class="insight-text">
+                        Your 500th store opening: 5.57M views, number three all-time. You create viral moments from
+                        authentic achievements, not expensive celebrity partnerships.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: VULNERABILITIES -->
+    <section class="section" data-section-id="4">
+        <div class="section-inner">
+            <div class="section-label">Section 04 · Opportunities to Improve</div>
+            <h2 class="section-title">Four fixable gaps stand between you and market leadership.</h2>
+
+            <p class="section-text">
+                The good news: Every gap is fixable without massive investment or radical transformation. They require
+                <strong>focused execution on known issues.</strong>
+            </p>
+
+            <div class="chart-container">
+                <div class="chart-title">The 13-Point Sentiment Gap</div>
+                <div class="chart-subtitle">Your Biggest Opportunity</div>
+
+                <div class="bar-chart">
+                    <div class="bar-row">
+                        <div class="bar-label">Chicken Licken</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="78">78%</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">Hungry Lion</div>
+                        <div class="bar-track">
+                            <div class="bar-fill secondary" data-width="65">65%</div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <div class="bar-label">KFC</div>
+                        <div class="bar-track">
+                            <div class="bar-fill secondary" data-width="56">56%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="insight-grid">
+                <div class="insight-card">
+                    <div class="insight-number">Gap 01</div>
+                    <div class="insight-title">Operational Inconsistency</div>
+                    <div class="insight-text">
+                        13 posts mention variable quality across locations. "Some locations are fire, others not so
+                        much." Training and standards enforcement issues.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">Gap 02</div>
+                    <div class="insight-title">Service Speed</div>
+                    <div class="insight-text">
+                        8 posts (50% negative) mention slow service during peak hours. "Can't wait 30 minutes on work
+                        break." Capacity management issues.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">Gap 03</div>
+                    <div class="insight-title">Crisis Response</div>
+                    <div class="insight-text">
+                        9 posts documenting Polokwane fires with no visible brand response. Silence equals guilt
+                        assumption. Missed trust-building opportunity.
+                    </div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-number">Gap 04</div>
+                    <div class="insight-title">Content Efficiency</div>
+                    <div class="insight-text">
+                        Your average 422K views per post versus Chicken Licken's 937K (2.2x gap). You work harder for
+                        less reach. Campaign sophistication needed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: 90-DAY ROADMAP -->
+    <section class="section" data-section-id="5">
+        <div class="section-inner">
+            <div class="section-label">Section 05 · Your 90-Day Roadmap</div>
+            <h2 class="section-title">Here's exactly what to do in the next 90 days to close the gap.</h2>
+
+            <p class="section-text">
+                This isn't theoretical. It's a tactical, month-by-month plan with specific actions, owners, budgets, and
+                expected outcomes.
+            </p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-label">Month 1: Quick Wins</div>
+                    <div class="timeline-title">Stop the Bleeding & Amplify What Works</div>
+                    <div class="timeline-text">
+                        <strong>Week 1-2: Crisis Response & Intelligence</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>Public statement on Polokwane fires (R0 budget)</li>
+                        <li>Mystery shopper program at 20 lowest-performing locations (R50K)</li>
+                        <li>Implement social listening tool with crisis alerts (R15K monthly)</li>
+                    </ul>
+                    <div class="timeline-text">
+                        <strong>Week 3-4: Amplify Strengths</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>Launch Triple Big Boss content series (R30K production)</li>
+                        <li>Magic Mornings and Epic Evenings push (R100K media)</li>
+                        <li>"Share Your Lion Moment" campaign (R20K prizes)</li>
+                    </ul>
+                    <div class="callout">
+                        <div class="callout-title">Expected Outcome</div>
+                        <div class="callout-text">20-30% boost in engagement, 5-10M additional views, stop negative
+                            momentum from known issues</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-label">Month 2: Foundation Building</div>
+                    <div class="timeline-title">Fix Operations & Develop Campaign</div>
+                    <div class="timeline-text">
+                        <strong>Week 5-6: Operations Excellence</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>On-site audits plus training at underperforming locations (R200K)</li>
+                        <li>Kitchen workflow optimization at high-volume stores (R150K)</li>
+                        <li>Create visual training guides and preparation videos (R80K)</li>
+                    </ul>
+                    <div class="timeline-text">
+                        <strong>Week 7-8: Campaign Development</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>Design "Pride of the Lion" campaign mechanics (R50K)</li>
+                        <li>Recruit micro-influencer partners (10-15 creators)</li>
+                        <li>Build content calendar for Q1 2026</li>
+                    </ul>
+                    <div class="callout">
+                        <div class="callout-title">Expected Outcome</div>
+                        <div class="callout-text">Begin closing quality gap, reduce negative mentions by 20%, ready to
+                            launch major campaign</div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-label">Month 3: Campaign Launch</div>
+                    <div class="timeline-title">Execute, Amplify, Optimize</div>
+                    <div class="timeline-text">
+                        <strong>Week 9-10: "Pride of the Lion" Launch</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>Influencer seeding with 15 micro-creators (R130K total)</li>
+                        <li>Paid amplification of top organic content (R50K media)</li>
+                        <li>In-store POS integration plus staff training (R30K)</li>
+                    </ul>
+                    <div class="timeline-text">
+                        <strong>Week 11-12: Optimize & Scale</strong>
+                    </div>
+                    <ul class="timeline-list">
+                        <li>Daily performance monitoring and optimization</li>
+                        <li>Re-audit bottom 20 locations for improvement (R25K)</li>
+                        <li>Track competitive responses and adjust tactics</li>
+                    </ul>
+                    <div class="callout">
+                        <div class="callout-title">Expected Outcome</div>
+                        <div class="callout-text">15-20M views, 100-200 pieces of UGC, 5-8 point sentiment boost,
+                            sustained momentum</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">90-Day Success Metrics</div>
+                <div class="chart-subtitle">Targets to Hit</div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>90-Day Target</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Positive Sentiment</td>
+                            <td>65%</td>
+                            <td class="winner">72-75%</td>
+                        </tr>
+                        <tr>
+                            <td>Avg Views per Post</td>
+                            <td>422K</td>
+                            <td class="winner">550-600K</td>
+                        </tr>
+                        <tr>
+                            <td>Total Engagement</td>
+                            <td>878K</td>
+                            <td class="winner">1.1-1.3M</td>
+                        </tr>
+                        <tr>
+                            <td>Crisis Response Time</td>
+                            <td>N/A</td>
+                            <td class="winner">&lt;4 hours</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 7: CONCLUSION -->
+    <section class="section" data-section-id="6">
+        <div class="section-inner">
+            <div class="section-label">Section 06 · The Decision</div>
+            <h2 class="section-title">You stand at a critical inflection point.</h2>
+
+            <p class="section-text">
+                You have the foundation: volume leadership, signature products, value positioning. You have momentum:
+                500th store milestone, engaged community, better operations than KFC.
+            </p>
+
+            <p class="section-text">
+                But you also have a <strong>13-point sentiment gap</strong> that allows Chicken Licken to command
+                premium perception, an <strong>efficiency gap</strong> that means you work harder for less reach, and
+                <strong>inconsistency issues</strong> that erode trust.
+            </p>
+
+            <p class="section-text">
+                The good news: <strong>Every gap is fixable</strong>. None require massive investment or radical
+                transformation. They require focused execution on known issues.
+            </p>
+
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Option 1: Status Quo</div>
+                    <div class="stat-value" style="font-size: 28px;">Maintain</div>
+                    <div class="stat-description">Continue current approach. Sustainable but limited growth. Defensive
+                        positioning.</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Option 2: Strategic Evolution</div>
+                    <div class="stat-value" style="font-size: 28px;">Lead</div>
+                    <div class="stat-description">Close sentiment gap. Improve efficiency. Market leadership.</div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <div class="callout-title">The Question</div>
+                <div class="callout-text">
+                    We believe Hungry Lion can be the number one fast-food chicken brand in South Africa—in both volume
+                    and sentiment. This report proves you have the foundation. The question is: are you ready to
+                    execute?
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <h2 class="footer-title">Let's Close the Gap</h2>
+        <p class="footer-text">
+            DIG Social Intelligence provides real-time brand monitoring, competitive intelligence, and actionable
+            insights that drive results. We don't just deliver reports—we partner with you to achieve market leadership.
+        </p>
+        <a href="mailto:info@dig.ai" class="cta-button">Start Your Transformation</a>
+
+        <div class="footer-meta">
+            DIG Social Intelligence · Prepared for Hungry Lion Management Team<br>
+            Report Date: December 24, 2025 · Analysis Period: June - December 2025<br>
+            Confidential & Proprietary
+        </div>
+    </footer>
+
+    <script>
+        // Navigation scroll tracking
+        const sections = document.querySelectorAll('.section');
+        const navDots = document.querySelectorAll('.nav-dot');
+
+        function updateNavigation() {
+            let currentSection = 0;
+
+            sections.forEach((section, index) => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+                    currentSection = index;
+                }
+            });
+
+            navDots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSection);
+            });
+        }
+
+        window.addEventListener('scroll', updateNavigation);
+
+        // Smooth scroll on nav click
+        navDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                sections[index].scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Animate bars on scroll with Intersection Observer
+        const observerOptions = {
+            threshold: 0.3,
+            rootMargin: '0px'
+        };
+
+        const barObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('.bar-fill');
+                    bars.forEach(bar => {
+                        const width = bar.getAttribute('data-width');
+                        bar.style.setProperty('--target-width', width + '%');
+                        // Trigger animation with slight delay
+                        setTimeout(() => {
+                            bar.classList.add('animate');
+                        }, 100);
+                    });
+                    barObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all chart containers
+        document.querySelectorAll('.chart-container').forEach(chart => {
+            barObserver.observe(chart);
+        });
+    </script>
+</body>
+
+</html>
